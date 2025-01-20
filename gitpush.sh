@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set HOME environment variable
+export HOME="/home/salonapp"
+
 # Define the correct SSH key path inside salonapp's home directory
 SSH_DIR="/home/salonapp/public_html/ssh"
 SSH_KEY="$SSH_DIR/id_ed25519"
@@ -23,7 +26,7 @@ else
 fi
 
 # Start the SSH agent and add the key
-eval "$(ssh-agent -s)"
+eval "$(ssh-agent -s)" > /dev/null
 ssh-add "$SSH_KEY"
 
 # Configure SSH to use this key
@@ -51,10 +54,10 @@ fi
 
 cd "$REPO_PATH" || { echo "Failed to access repository directory!"; exit 1; }
 
-# Set Git user details
+# Set Git user details (use local config instead of global)
 echo "Setting Git user details..."
-git config --global user.name "salonapp2205"
-git config --global user.email "salonapp2205@gmail.com"
+git config --local user.name "salonapp2205"
+git config --local user.email "salonapp2205@gmail.com"
 
 # Add changes, commit, and push
 echo "Adding and committing changes..."
@@ -62,5 +65,8 @@ git add .
 git branch -M main
 git commit -m "Automated commit from gitpush.sh" || echo "No changes to commit."
 git push -u origin main
-git sparse-checkout reapply
+
+# Remove sparse checkout if not used
+# git sparse-checkout reapply   # REMOVE if sparse checkout is not needed
+
 echo "Git push completed successfully!"
