@@ -59,7 +59,8 @@ git config --global user.email "salonapp2205@gmail.com"
 # Add changes, commit, and push
 echo "Adding and committing changes..."
 git add .
+git branch -M main
 git commit -m "Automated commit from gitpush.sh" || echo "No changes to commit."
-git push origin main || git push origin master
-
+git push -u origin main
+git sparse-checkout reapply
 echo "Git push completed successfully!"
