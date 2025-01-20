@@ -16,7 +16,7 @@ if [ ! -f "$SSH_KEY" ]; then
     chmod 644 "$SSH_KEY.pub"
     echo "New SSH key generated: $SSH_KEY"
 else
-    echo "SSH key already exists: $SSH_KEY"
+    echo "SSH key already exists 1: $SSH_KEY"
 fi
 
 # Start the SSH agent
