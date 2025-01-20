@@ -1,46 +1,49 @@
 #!/bin/bash
 
-# Set the correct home directory for salonapp user
-NEW_HOME="/"
-export HOME="$NEW_HOME"
+# Define the SSH key path
+SSH_DIR="/home/salonapp/public_html/ssh"
+SSH_KEY="$SSH_DIR/id_ed25519"
 
-echo "Setting HOME directory to: $HOME"
-
-# Ensure .ssh directory exists in the correct location
-SSH_DIR="$HOME/.ssh"
+# Ensure the SSH directory exists
 mkdir -p "$SSH_DIR"
+chmod 700 "$SSH_DIR"
 
-# Move SSH keys from root to salonapp's home if needed
-if [ -f "/root/.ssh/id_ed25519" ]; then
-    echo "Moving SSH keys to $SSH_DIR..."
-    cp /root/.ssh/id_ed25519 "$SSH_DIR/"
-    cp /root/.ssh/id_ed25519.pub "$SSH_DIR/"
-    chown -R salonapp:salonapp "$SSH_DIR"
-    chmod 700 "$SSH_DIR"
-    chmod 600 "$SSH_DIR/id_ed25519"
+# Check if the SSH key already exists, if not, generate a new one
+if [ ! -f "$SSH_KEY" ]; then
+    echo "Generating a new SSH key..."
+    ssh-keygen -t ed25519 -C "your-email@example.com" -f "$SSH_KEY" -N ""
+    chmod 600 "$SSH_KEY"
+    chmod 644 "$SSH_KEY.pub"
+    echo "New SSH key generated: $SSH_KEY"
+else
+    echo "SSH key already exists: $SSH_KEY"
 fi
 
-# Start SSH agent and add the key
+# Start the SSH agent
 eval "$(ssh-agent -s)"
-ssh-add "$SSH_DIR/id_ed25519"
+ssh-add "$SSH_KEY"
 
-# Test SSH Connection
+# Configure SSH to use this key
+CONFIG_FILE="$HOME/.ssh/config"
+echo "Configuring SSH..."
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+if ! grep -q "$SSH_KEY" "$CONFIG_FILE"; then
+    echo -e "\nHost github.com\n    IdentityFile $SSH_KEY\n    User git\n    StrictHostKeyChecking no" >> "$CONFIG_FILE"
+fi
+
+# Test SSH connection
 echo "Testing SSH connection to GitHub..."
 ssh -T git@github.com
 
-# Configure Git to use this SSH key
-git config --global core.sshCommand "ssh -i $SSH_DIR/id_ed25519"
+# Move to the repository directory
+cd /home/salonapp/public_html/assets/img/homepage || { echo "Repository path not found!"; exit 1; }
 
-# Set Git User Details (Modify accordingly)
-git config --global user.name "salonapp2205"
-git config --global user.email "salonapp2205@gmail.com"
+# Add changes, commit, and push
+echo "Adding and committing changes..."
+git add .
+git commit -m "Automated commit from gitpush.sh"
+git push origin main
 
-# Verify Git Configuration
-echo "Git configuration:"
-git config --list
-
-# Attempt to Pull Latest Changes
-echo "Attempting to pull latest changes..."
-git pull origin main || git pull origin master
-
-echo "Git setup completed!"
+echo "Git push completed!"
